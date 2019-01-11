@@ -321,7 +321,10 @@ Function New-ArdoqComponent{
         ,
         [parameter(Mandatory=$false)] 
         [string]
-        $BaseURI = $ArdoqAPIBaseUri
+        $BaseURI = $ArdoqAPIBaseUri,
+        [parameter(Mandatory=$false)] 
+        [hashtable]
+        $CustomFields
     )
 
     IF(!$Headers){Write-error -Message 'Ardoq API header not specified. Use -Headers parameter or New-ArdoqAPIHeader' -ErrorAction Stop}
@@ -335,6 +338,14 @@ Function New-ArdoqComponent{
         "parent" = $parentid
         "typeId" = $typeId
         }
+
+    $CustomFields.GetEnumerator() | foreach {
+
+        $null = $parameters.Add($PSItem.Key,$PSItem.Value)
+    
+    }
+
+    $parameters
     
     $json = ConvertTo-Json $parameters
     
