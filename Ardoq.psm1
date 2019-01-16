@@ -344,8 +344,6 @@ Function New-ArdoqComponent{
         $null = $parameters.Add($PSItem.Key,$PSItem.Value)
     
     }
-
-    $parameters
     
     $json = ConvertTo-Json $parameters
     
