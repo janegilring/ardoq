@@ -1,31 +1,31 @@
 ﻿#region Functions
 Function Set-ArdoqAPIBaseUri{
     Param(
-        [parameter(Mandatory=$false)] 
-        [string]
+        [parameter(Mandatory=$false)]
+        [string]
         $URI = "https://app.ardoq.com/api"
         ,
-        [parameter(Mandatory=$true)] 
+        [parameter(Mandatory=$true)]
         [switch]
         $SetGlobal = $false
         )
 
     IF ($SetGlobal)
     {
-        Set-Variable -Name ArdoqAPIBaseUri -Value ($URI) -PassThru -Scope Global 
+        Set-Variable -Name ArdoqAPIBaseUri -Value ($URI) -PassThru -Scope Global
     }
 }
 Function New-ArdoqAPIHeader{
     Param(
-        [parameter(Mandatory=$true)] 
-        [string]
+        [parameter(Mandatory=$true)]
+        [string]
         $Token
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [switch]
         $SetGlobal = $false
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [switch]
         $BaseURI
         )
@@ -35,7 +35,7 @@ Function New-ArdoqAPIHeader{
         "Content-type" = "application/json"
         "Accepts" = "application/json"
         }
-    
+
     IF ($SetGlobal)
     {
         IF ($ArdoqAPIBaseUri)
@@ -47,7 +47,7 @@ Function New-ArdoqAPIHeader{
             Write-verbose "ArdoqAPIBaseUri set to deafult value"
             Set-ArdoqAPIBaseUri -SetGlobal
         }
-        Set-Variable -Name ArdoqAPIHeader -Value ($Headers) -PassThru -Scope Global 
+        Set-Variable -Name ArdoqAPIHeader -Value ($Headers) -PassThru -Scope Global
     }
     ELSE
     {
@@ -65,25 +65,25 @@ Function Clear-ArdoqVariabels{
     $Global:ArdoqOrganization = $null
 }
 Function Get-ArdoqWorkspace{
-    [CmdletBinding()] 
+    [CmdletBinding()]
     Param(
-        [parameter(Mandatory=$false)] 
-        [string]
+        [parameter(Mandatory=$false)]
+        [string]
         $Id
         ,
-        [parameter(Mandatory=$false)] 
-        [string]
+        [parameter(Mandatory=$false)]
+        [string]
         $Name
         ,
-        [parameter(Mandatory=$false)] 
-        [string]
+        [parameter(Mandatory=$false)]
+        [string]
         $org = $ArdoqOrganization
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [hashtable]
         $Headers = $ArdoqAPIHeader
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [string]
         $BaseURI = $ArdoqAPIBaseUri
     )
@@ -106,42 +106,42 @@ Function Get-ArdoqWorkspace{
             $URI = "$BaseURI/workspace"+"?org=$org"
         }
     }
-    
+
     $Objects = Invoke-RestMethod -Uri $URI -Headers $headers -Method GET -ContentType JSON
     $Objects
 }
 Function Get-ArdoqComponent{
-    [CmdletBinding()] 
+    [CmdletBinding()]
     Param(
-        [parameter(Mandatory=$false)] 
-        [string]
+        [parameter(Mandatory=$false)]
+        [string]
         $Id
         ,
-        [parameter(Mandatory=$false)] 
-        [string]
+        [parameter(Mandatory=$false)]
+        [string]
         $WorkspaceID = $ArdoqWorkspaceID
         ,
-        [parameter(Mandatory=$false)] 
-        [string]
+        [parameter(Mandatory=$false)]
+        [string]
         $org = $ArdoqOrganization
         ,
-        [parameter(Mandatory=$false)] 
-        [string]
+        [parameter(Mandatory=$false)]
+        [string]
         $Name
         ,
-        [parameter(Mandatory=$false)] 
-        [string]
+        [parameter(Mandatory=$false)]
+        [string]
         $Field
         ,
-        [parameter(Mandatory=$false)] 
-        [string]
+        [parameter(Mandatory=$false)]
+        [string]
         $Value
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [hashtable]
         $Headers = $ArdoqAPIHeader
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [string]
         $BaseURI = $ArdoqAPIBaseUri
     )
@@ -179,30 +179,30 @@ Function Get-ArdoqComponent{
     $objects
 }
 Function Update-ArdoqComponent{
-    [CmdletBinding()] 
+    [CmdletBinding()]
     Param(
-        [Parameter(Mandatory=$True, 
-        ValueFromPipeline=$True)]
+        [Parameter(Mandatory=$True,
+        ValueFromPipeline=$True)]
         [Object]
         $Object
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [switch]
         $Force
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [switch]
         $PassTruh
         ,
-        [parameter(Mandatory=$false)] 
-        [string]
+        [parameter(Mandatory=$false)]
+        [string]
         $org = $ArdoqOrganization
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [hashtable]
         $Headers = $ArdoqAPIHeader
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [string]
         $BaseURI = $ArdoqAPIBaseUri
     )
@@ -220,17 +220,20 @@ Function Update-ArdoqComponent{
             $_._version = $ForceObject._version
         }
 
+        # Request fails if 'type' is sent
+        $_.PSObject.properties.remove('type')
+
         $json = ConvertTo-Json $_
-    
+
         $DefaultEncoding = [System.Text.Encoding]::GetEncoding('ISO-8859-1')
         $UTF8Encoding = [System.Text.Encoding]::UTF8
         $jsonUTF8 = $null
         [System.Text.Encoding]::Convert($DefaultEncoding, $DefaultEncoding, $UTF8Encoding.GetBytes(($json))) | % { $jsonUTF8 += [char]$_}
-       
+
         $URI = "$BaseURI/component/$($_._id)"+"?org=$org"
 
         $Object = Invoke-RestMethod -Uri $URI -Headers $Headers -Method PUT -Body $jsonUTF8
-    
+
         IF ($PassTruh)
         {
             $Object
@@ -241,26 +244,26 @@ Function Update-ArdoqComponent{
     }
 }
 Function Remove-ArdoqComponent{
-    [CmdletBinding()] 
+    [CmdletBinding()]
     Param(
         [parameter(Mandatory=$false)]
-        [string]
+        [string]
         $id
         ,
-        [Parameter(Mandatory=$false, 
-        ValueFromPipeline=$True)]
+        [Parameter(Mandatory=$false,
+        ValueFromPipeline=$True)]
         [Object]
         $Object
         ,
-        [parameter(Mandatory=$false)] 
-        [string]
+        [parameter(Mandatory=$false)]
+        [string]
         $org = $ArdoqOrganization
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [hashtable]
         $Headers = $ArdoqAPIHeader
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [string]
         $BaseURI = $ArdoqAPIBaseUri
     )
@@ -286,43 +289,43 @@ Function Remove-ArdoqComponent{
     End
     {
         #write-host "Ending"
-    } 
+    }
 }
 Function New-ArdoqComponent{
-    [CmdletBinding()] 
+    [CmdletBinding()]
     Param(
         [parameter(Mandatory=$true)]
-        [string] 
+        [string]
         $name
         ,
-        [parameter(Mandatory=$true)] 
+        [parameter(Mandatory=$true)]
         [string]
         $description
         ,
-        [parameter(Mandatory=$true)] 
+        [parameter(Mandatory=$true)]
         [string]
         $parentid
         ,
-        [parameter(Mandatory=$true)] 
+        [parameter(Mandatory=$true)]
         [string]
         $typeId
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [string]
         $WorkspaceId = $ArdoqWorkspaceId
         ,
-        [parameter(Mandatory=$false)] 
-        [string]
+        [parameter(Mandatory=$false)]
+        [string]
         $org = $ArdoqOrganization
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [hashtable]
         $Headers = $ArdoqAPIHeader
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [string]
         $BaseURI = $ArdoqAPIBaseUri,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [hashtable]
         $CustomFields
     )
@@ -330,7 +333,7 @@ Function New-ArdoqComponent{
     IF(!$Headers){Write-error -Message 'Ardoq API header not specified. Use -Headers parameter or New-ArdoqAPIHeader' -ErrorAction Stop}
     IF(!$BaseURI){Write-error -Message 'Ardoq Base API URI not specified. Use -BaseURI parameter or Set-ArdoqAPIBaseUri' -ErrorAction Stop}
     IF(!$WorkspaceID){Write-error -Message 'Ardoq Workspace ID not specified. Use -WorkspaceID parameter or define variabel $ArdoqWorkspaceID' -ErrorAction Stop}
-    
+
     $parameters = @{
         "name" = $name
         "description" = $description
@@ -339,19 +342,22 @@ Function New-ArdoqComponent{
         "typeId" = $typeId
         }
 
+if ($CustomFields) {
     $CustomFields.GetEnumerator() | foreach {
 
         $null = $parameters.Add($PSItem.Key,$PSItem.Value)
-    
-    }
-    
-    $json = ConvertTo-Json $parameters
-    
 
+    }
+
+    }
+
+    $json = ConvertTo-Json $parameters
+
+    $jsonUTF8 = $null
     $DefaultEncoding = [System.Text.Encoding]::GetEncoding('ISO-8859-1')
     $UTF8Encoding = [System.Text.Encoding]::UTF8
     [System.Text.Encoding]::Convert($DefaultEncoding, $DefaultEncoding, $UTF8Encoding.GetBytes(($json))) | % { $jsonUTF8 += [char]$_}
-    
+
 
     $URI = "$BaseURI/component"+"?org=$org"
 
@@ -363,61 +369,61 @@ Function New-ArdoqComponent{
     }
     Catch
     {
-        Write-error $_.Exception.ToString()
-        $error[0] | Format-List -Force
-    }  
+        Write-error $_.Exception.ToString()
+        $error[0] | Format-List -Force
+    }
 
     $Object
 }
 Function New-ArdoqReference{
-    [CmdletBinding()] 
+    [CmdletBinding()]
     Param(
         [parameter(Mandatory=$true)]
-        [string] 
+        [string]
         $sourceid
         ,
-        [parameter(Mandatory=$true)] 
+        [parameter(Mandatory=$true)]
         [string]
         $targetid
         ,
-        [parameter(Mandatory=$true)] 
+        [parameter(Mandatory=$true)]
         [int]
         $type
         ,
-        [parameter(Mandatory=$true)] 
+        [parameter(Mandatory=$true)]
         [string]
         $displayText = $displayText
         ,
-        [parameter(Mandatory=$false)] 
-        [string]
+        [parameter(Mandatory=$false)]
+        [string]
         $org = $ArdoqOrganization
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [hashtable]
         $Headers = $ArdoqAPIHeader
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [string]
         $BaseURI = $ArdoqAPIBaseUri
     )
 
     IF(!$Headers){Write-error -Message 'Ardoq API header not specified. Use -Headers parameter or New-ArdoqAPIHeader' -ErrorAction Stop}
     IF(!$BaseURI){Write-error -Message 'Ardoq Base API URI not specified. Use -BaseURI parameter or Set-ArdoqAPIBaseUri' -ErrorAction Stop}
-    
+
     $parameters = @{
         "source" = $sourceid
         "target" = $targetid
         "type" = $type
         "displayText" = $displayText
         }
-    
+
     $json = ConvertTo-Json $parameters
-    
+
 
     $DefaultEncoding = [System.Text.Encoding]::GetEncoding('ISO-8859-1')
     $UTF8Encoding = [System.Text.Encoding]::UTF8
     [System.Text.Encoding]::Convert($DefaultEncoding, $DefaultEncoding, $UTF8Encoding.GetBytes(($json))) | % { $jsonUTF8 += [char]$_}
-    
+
 
     $URI = "$BaseURI/reference"+"?org=$org"
 
@@ -426,26 +432,26 @@ Function New-ArdoqReference{
     $Object
 }
 Function Remove-ArdoqReference{
-    [CmdletBinding()] 
+    [CmdletBinding()]
     Param(
         [parameter(Mandatory=$false)]
-        [string]
+        [string]
         $id
         ,
-        [Parameter(Mandatory=$false, 
-        ValueFromPipeline=$True)]
+        [Parameter(Mandatory=$false,
+        ValueFromPipeline=$True)]
         [Object]
         $Object
         ,
-        [parameter(Mandatory=$false)] 
-        [string]
+        [parameter(Mandatory=$false)]
+        [string]
         $org = $ArdoqOrganization
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [hashtable]
         $Headers = $ArdoqAPIHeader
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [string]
         $BaseURI = $ArdoqAPIBaseUri
     )
@@ -471,31 +477,31 @@ Function Remove-ArdoqReference{
     End
     {
         #write-host "Ending"
-    } 
+    }
 }
 Function Get-ArdoqModel{
-    [CmdletBinding()] 
+    [CmdletBinding()]
     Param(
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [string]
         $Id
         ,
-        [parameter(Mandatory=$false)] 
-        [string]
+        [parameter(Mandatory=$false)]
+        [string]
         $org = $ArdoqOrganization
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [hashtable]
         $Headers = $ArdoqAPIHeader
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [string]
         $BaseURI = $ArdoqAPIBaseUri
     )
 
     IF(!$Headers){Write-error -Message 'Ardoq API header not specified. Use -Headers parameter or New-ArdoqAPIHeader' -ErrorAction Stop}
     IF(!$BaseURI){Write-error -Message 'Ardoq Base API URI not specified. Use -BaseURI parameter or Set-ArdoqAPIBaseUri' -ErrorAction Stop}
-    
+
     IF ($Id)
     {
         $URI = "$BaseURI/model/$Id"+"?org=$org"
@@ -509,28 +515,28 @@ Function Get-ArdoqModel{
     $Objects
 }
 Function Get-ArdoqReference{
-    [CmdletBinding()] 
+    [CmdletBinding()]
     Param(
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [string]
         $Id
         ,
-        [parameter(Mandatory=$false)] 
-        [string]
+        [parameter(Mandatory=$false)]
+        [string]
         $org = $ArdoqOrganization
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [hashtable]
         $Headers = $ArdoqAPIHeader
         ,
-        [parameter(Mandatory=$false)] 
+        [parameter(Mandatory=$false)]
         [string]
         $BaseURI = $ArdoqAPIBaseUri
     )
 
     IF(!$Headers){Write-error -Message 'Ardoq API header not specified. Use -Headers parameter or New-ArdoqAPIHeader' -ErrorAction Stop}
     IF(!$BaseURI){Write-error -Message 'Ardoq Base API URI not specified. Use -BaseURI parameter or Set-ArdoqAPIBaseUri' -ErrorAction Stop}
-    
+
     IF ($Id)
     {
         $URI = "$BaseURI/reference/$Id"+"?org=$org"
